@@ -2,6 +2,7 @@ package com.alin.myshoppinglist;
 
 import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import com.alin.myshoppinglist.adapters.ShoppingListItemAdapter;
 import com.alin.myshoppinglist.adapters.ShoppingListItemCheckerAdapter;
 import com.alin.myshoppinglist.models.ShoppingList;
 import com.alin.myshoppinglist.models.ShoppingListItem;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,29 +33,20 @@ public class ShoppingListCheckerActivity extends AppCompatActivity {
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference dbReference = database.getReference();
     List<ShoppingListItem> items = new ArrayList<>();
+    ShoppingListItemCheckerAdapter slicAdapter;
 
     private void getShoppingList(final String listName) {
-        dbReference.addValueEventListener(new ValueEventListener() {
+        dbReference.child(listName).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Map<String, Object> data = (Map<String, Object>)dataSnapshot.getValue();
-                if (data == null) {
-                    return;
+                items = new ArrayList<>();
+                Log.d("database in checker", dataSnapshot.getKey() + " " + dataSnapshot.getValue());
+                List<Object> dbItems = (List<Object>) dataSnapshot.getValue();
+                for (int i = 0; i < dbItems.size(); i++) {
+                    items.add(new ShoppingListItem((Map<String, Object>) dbItems.get(i)));
                 }
-                for (Map.Entry<String, Object> e : data.entrySet()) {
-                    if (e.getKey().equals(listName)) {
-                        items = new ArrayList<>();
-                        Log.d("database", e.getKey() + " " + e.getValue());
-                        List<Object> dbItems = (List<Object>) e.getValue();
-                        for (int i = 0; i < dbItems.size(); i++) {
-                            items.add(new ShoppingListItem((Map<String, Object>) dbItems.get(i)));
-                        }
-                        ShoppingListItemCheckerAdapter adapter = (ShoppingListItemCheckerAdapter) ((ListView) findViewById(R.id.shopping_list_checker)).getAdapter();
-                        adapter.clear();
-                        adapter.addAll(items);
-                        adapter.notifyDataSetChanged();
-                    }
-                }
+                slicAdapter.clear();
+                slicAdapter.addAll(items);
             }
 
             @Override
@@ -68,13 +61,12 @@ public class ShoppingListCheckerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_shopping_list_checker);
 
-        //Log.d("stringExtra", getIntent().getStringExtra("listName"));
         String listName = getIntent().getStringExtra("listName");
         getShoppingList(listName);
 
         ListView shoppingItems = findViewById(R.id.shopping_list_checker);
-        ShoppingListItemCheckerAdapter adapter = new ShoppingListItemCheckerAdapter(this, R.layout.shopping_list_item, listName, items);
-        shoppingItems.setAdapter(adapter);
+        slicAdapter = new ShoppingListItemCheckerAdapter(this, R.layout.shopping_list_item, listName, items);
+        shoppingItems.setAdapter(slicAdapter);
 
         TextView listNameTextView = findViewById(R.id.list_name_checker);
         listNameTextView.setText(listName);
@@ -83,7 +75,7 @@ public class ShoppingListCheckerActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                finish();
             }
         });
     }

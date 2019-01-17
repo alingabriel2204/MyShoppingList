@@ -24,32 +24,14 @@ public class NewShoppingListActivity extends AppCompatActivity {
     ShoppingList sl = new ShoppingList();
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference dbReference = database.getReference();
-
-    private void setupToolbar() {
-        Toolbar toolbar = findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);
-
-        Log.d("toolbar", toolbar.toString());
-        // add back arrow to toolbar; I couldn't get it to work!
-//        if (getSupportActionBar() != null) {
-//            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-//            getSupportActionBar().setDisplayShowHomeEnabled(true);
-//        }
-//        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Log.d("onClick toolbar", "am dat click pe toolbar back bai neneneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
-//                startActivity(new Intent(getApplicationContext(), MainActivity.class));
-//            }
-//        });
-    }
+    ShoppingListItemAdapter sliAdapter;
 
     private void setupFABs() {
         FloatingActionButton fab = findViewById(R.id.fab_back);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                finish();
             }
         });
 
@@ -57,10 +39,8 @@ public class NewShoppingListActivity extends AppCompatActivity {
         fab2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                Snackbar.make(view, "New Shopping item", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
                 sl.items.add(new ShoppingListItem());
-                ((ShoppingListItemAdapter)((ListView)findViewById(R.id.shopping_items)).getAdapter()).notifyDataSetChanged();
+                sliAdapter.notifyDataSetChanged();
             }
         });
     }
@@ -70,7 +50,6 @@ public class NewShoppingListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_shopping_list);
 
-        setupToolbar();
         setupFABs();
 
         sl.addItem(new ShoppingListItem("mere"));
@@ -78,9 +57,8 @@ public class NewShoppingListActivity extends AppCompatActivity {
         sl.addItem(new ShoppingListItem("cozonaci"));
 
         ListView shoppingItems = findViewById(R.id.shopping_items);
-        ShoppingListItemAdapter adapter = new ShoppingListItemAdapter(this, R.layout.shopping_list_item, sl.items);
-        shoppingItems.setAdapter(adapter);
-        //shoppingLists.setEmptyView(findViewById(R.id.empty_list));
+        sliAdapter = new ShoppingListItemAdapter(this, R.layout.shopping_list_item, sl.items);
+        shoppingItems.setAdapter(sliAdapter);
 
         EditText listName = findViewById(R.id.list_name);
         listName.addTextChangedListener(new TextWatcher() {
@@ -96,8 +74,6 @@ public class NewShoppingListActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                Log.d("textChanged", "after text changeeeeeed");
-                Log.d("textChanged", s.toString());
                 sl.name = s.toString();
             }
         });
@@ -119,12 +95,11 @@ public class NewShoppingListActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_save) {
-            Log.d("actionSave", "am apasat butonul de salveaza lista");
             if (sl.name.length() == 0) {
                 return false;
             }
             dbReference.child(sl.name).setValue(sl.items);
-            startActivity(new Intent(getApplicationContext(), MainActivity.class));
+            finish();
             return true;
         }
 

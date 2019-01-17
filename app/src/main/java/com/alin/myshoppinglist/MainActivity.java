@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference dbReference = database.getReference();
     List<ShoppingList> sls = new ArrayList<>();
+    ArrayAdapter arrAdapter;
 
     private void getShoppingLists() {
         dbReference.addValueEventListener(new ValueEventListener() {
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
                 if (data == null) {
                     return;
                 }
+                sls.clear();
                 for (Map.Entry<String, Object> e : data.entrySet()) {
                     Log.d("database", e.getKey() + " " + e.getValue());
                     String shoppingListName = e.getKey();
@@ -55,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     sls.add(new ShoppingList(shoppingListName, items));
                 }
-                ((ArrayAdapter)((ListView)findViewById(R.id.shopping_lists)).getAdapter()).notifyDataSetChanged();
+                arrAdapter.notifyDataSetChanged();
 
             }
 
@@ -68,16 +70,14 @@ public class MainActivity extends AppCompatActivity {
 
     public void setupListView() {
         ListView shoppingLists = findViewById(R.id.shopping_lists);
-        shoppingLists.setEmptyView(findViewById(R.id.empty_list));
 
         getShoppingLists();
-        ArrayAdapter adapter = new ArrayAdapter<>(this, R.layout.shopping_lists, R.id.shopping_list, sls);
-        shoppingLists.setAdapter(adapter);
+        arrAdapter = new ArrayAdapter<>(this, R.layout.shopping_lists, R.id.shopping_list, sls);
+        shoppingLists.setAdapter(arrAdapter);
 
         shoppingLists.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View viewClicked, int position, long id) {
-                Log.d("onItemClick", "am apasat pe " + position + " " + id);
                 Intent myIntent = new Intent(viewClicked.getContext(), ShoppingListCheckerActivity.class);
                 myIntent.putExtra("listName", sls.get(position).name);
                 startActivity(myIntent);
